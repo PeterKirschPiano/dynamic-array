@@ -9,12 +9,12 @@
 
 #define SHRINK_FACTOR 0.25
 
-int* int_array_initialize(int size)
+d_array_datatype_t* dyn_array_initialize(int size)
 {
-    int *array = calloc(size, sizeof(int));
+    d_array_datatype_t *array = calloc(size, sizeof(d_array_datatype_t));
     if(array == NULL)
     {
-        puts("array init failed.");
+        puts("Array init failed.");
         free(array);
         return NULL;
     }
@@ -22,19 +22,17 @@ int* int_array_initialize(int size)
         return array;
 }
 
-int int_array_element_add(int new_element, int *n_elements, int *size, int **array)
+int dyn_array_element_add(d_array_datatype_t new_element, int *n_elements, int *size, d_array_datatype_t **array)
 {
     if(array == NULL)
         return ERROR;
 
     if(*n_elements == *size)
     {
-        int *temp = int_array_enlarge(size, *array);
-        //enlarge the array
+        d_array_datatype_t *temp = dyn_array_enlarge(size, *array);
         if(temp != NULL)
         {
             *array = temp;
-
             (*array)[*n_elements] = new_element;
             (*n_elements)++;
             return SUCCESS;
@@ -50,33 +48,29 @@ int int_array_element_add(int new_element, int *n_elements, int *size, int **arr
     }
 }
 
-int *int_array_enlarge(int *size, int *array)
+d_array_datatype_t *dyn_array_enlarge(int *size, d_array_datatype_t *array)
 {
     int old_size = *size;
     int new_size = old_size * 2;
 
-    //alloc new space
-    int *temp = calloc(new_size, sizeof(int));
+    d_array_datatype_t *temp = calloc(new_size, sizeof(d_array_datatype_t));
     if(temp == NULL)
     {
-        puts("int array enlarge failed.");
+        puts("Array enlarge failed.");
         return NULL;
     }
 
     if (array == NULL)
         return NULL;
 
-    //copy old data to new array
-    memcpy(temp, array, old_size * sizeof(int));
-    //free old memory
+    memcpy(temp, array, old_size * sizeof(d_array_datatype_t));
     free(array);
-    //update size
     *size = new_size;
 
     return temp;
 }
 
-int *int_array_shrink(double factor, int *size, int *array)
+d_array_datatype_t *dyn_array_shrink(double factor, int *size, d_array_datatype_t *array)
 {
     if(array == NULL)
         return NULL;
@@ -89,68 +83,70 @@ int *int_array_shrink(double factor, int *size, int *array)
 
     if(*size <= 1)
     {
-        puts("SIZE TO SMALL.");
+        puts("SIZE TOO SMALL.");
         return NULL;
     }
 
-    //if we ever want an array with an uneven size -> this rounds the new size up
     int new_size = ceil((double)(*size) * factor);
-
     if(new_size < 1)
         new_size = 1;
 
-    int *temp = calloc(new_size, sizeof(int));
+    d_array_datatype_t *temp = calloc(new_size, sizeof(d_array_datatype_t));
 
     if(temp == NULL)
-        return ERROR;
-    //cpy memory value
-    memcpy(temp, array, new_size * sizeof(int));
+        return NULL;
+
+    memcpy(temp, array, new_size * sizeof(d_array_datatype_t));
 
     free(array);
-    //updated size
     *size = new_size;
 
     return temp;
 }
 
-void int_array_element_print(int n_elements, int* array)
+void dyn_array_element_print(int n_elements, d_array_datatype_t* array)
 {
     if(n_elements > 0)
     {
         for(int i = 0; i < n_elements; i++)
-            printf("[%d] %d\n", i, array[i]);
+        {
+            if(DATATYPE_CHAR)
+                printf("[%d]  %c\n", i, array[i]);
+            else if(DATATYPE_INT)
+                printf("[%d]  %d\n", i, array[i]);
+            else if(DATATYPE_DOUBLE)
+                printf("[%d]  %lf\n", i, array[i]);
+            else if(DATATYPE_FLOAT)
+                printf("[%d]  %f\n", i, array[i]);
+        }
+
+        puts("");
     }
     else
-        puts("array is empty.");
-
-    puts("");
+        puts("Array is empty.");
 }
 
-int int_array_element_delete(int element, int *n_elements, int *size, int **array)
+int dyn_array_element_delete(d_array_datatype_t element, int *n_elements, int *size, d_array_datatype_t **array)
 {
     if(*array == NULL)
         return ERROR;
 
-    //find the index of the element in question
-    int temp = int_array_element_find_index(element, *n_elements, *array);
+    int temp = dyn_array_element_find_index(element, *n_elements, *array);
 
     if(temp != -1)
     {
-        //if the element is the last element in the array simply reduce number of elements
         if(temp + 1 == *n_elements)
             (*n_elements)--;
         else
         {
             int number_of_successive_elements = *n_elements - (temp + 1);
-            //copy the rest of the array over the element -> regardless if its the last element
-            memcpy(array[temp], array[temp + 1], number_of_successive_elements * sizeof(int));
+            memcpy(&((*array)[temp]), &((*array)[temp + 1]), number_of_successive_elements * sizeof(d_array_datatype_t));
             (*n_elements)--;
         }
-        //resizing section
+
         double factor = SHRINK_FACTOR;
         if((double)*n_elements / (double)*size <= factor)
-            *array = int_array_shrink(factor, size, *array);
-
+            *array = dyn_array_shrink(factor, size, *array);
 
         return SUCCESS;
     }
@@ -159,7 +155,7 @@ int int_array_element_delete(int element, int *n_elements, int *size, int **arra
     return ERROR;
 }
 
-int *int_array_element_find_adress(int element, int n_elements, int *array)
+d_array_datatype_t *dyn_array_element_find_address(d_array_datatype_t element, int n_elements, d_array_datatype_t *array)
 {
     if(array == NULL)
         return NULL;
@@ -173,7 +169,7 @@ int *int_array_element_find_adress(int element, int n_elements, int *array)
     return NULL;
 }
 
-int int_array_element_find_index(int element, int n_elements, int *array)
+int dyn_array_element_find_index(d_array_datatype_t element, int n_elements, d_array_datatype_t *array)
 {
     if(array == NULL)
         return -1;
@@ -187,7 +183,7 @@ int int_array_element_find_index(int element, int n_elements, int *array)
     return -1;
 }
 
-int *int_array_element_dequeue(int **array, int *size, int* n_elements)
+d_array_datatype_t *dyn_array_element_dequeue(d_array_datatype_t **array, int *size, int* n_elements)
 {
     if(array == NULL || *array == NULL || n_elements == NULL || size == NULL)
         return NULL;
@@ -198,26 +194,21 @@ int *int_array_element_dequeue(int **array, int *size, int* n_elements)
         return NULL;
     }
 
-    //static buffer variable
-    static int temp = 0;
-    //save value of element to pop
+    static d_array_datatype_t temp;
     temp = **array;
     (*n_elements)--;
 
-    //copy remaining elements
     if(*n_elements > 0)
-        memcpy(*array, *array + 1, (*n_elements) * sizeof(int));
+        memmove(*array, *array + 1, (*n_elements) * sizeof(d_array_datatype_t));
 
-    //resizing section
     double factor = SHRINK_FACTOR;
     if((double)*n_elements / (double)*size <= factor)
-        *array = int_array_shrink(factor, size, *array);
+        *array = dyn_array_shrink(factor, size, *array);
 
-    //return memory adress of static buffer
     return &temp;
 }
 
-int *int_array_element_pop(int **array, int *size, int *n_elements)
+d_array_datatype_t *dyn_array_element_pop(d_array_datatype_t **array, int *size, int *n_elements)
 {
     if(array == NULL || *array == NULL || n_elements == NULL || size == NULL)
         return NULL;
@@ -228,17 +219,13 @@ int *int_array_element_pop(int **array, int *size, int *n_elements)
         return NULL;
     }
 
-    //static buffer variable
-    static int temp = 0;
-    //save value of element to pop
+    static d_array_datatype_t temp;
     temp = (*array)[*n_elements - 1];
     (*n_elements)--;
 
-    //resizing section
     double factor = SHRINK_FACTOR;
     if((double)*n_elements / (double)*size <= factor)
-        *array = int_array_shrink(factor, size, *array);
+        *array = dyn_array_shrink(factor, size, *array);
 
-    //return memory adress of static buffer
     return &temp;
 }
