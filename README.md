@@ -3,7 +3,7 @@
 A simple **dynamic integer array** implementation in C, supporting **automatic resizing, queue operations, and stack operations**.  
 
 ## Features  
-✅ Dynamic memory allocation for integer arrays  
+✅ Dynamic memory allocation for int, char, float and double arrays  
 ✅ Automatic resizing (expansion & shrinking)  
 ✅ Stack operations (`push`, `pop`)  
 ✅ Queue operations (`enqueue`, `dequeue`)  
